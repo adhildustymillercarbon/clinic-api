@@ -20,6 +20,20 @@ class Settings(BaseSettings):
     rate_limit_window_seconds: int = 60
     idempotency_ttl_seconds: int = 86400
 
+    # OpenObserve Observability (Traces & Logs)
+    openobserve_ai_token: str | None = None
+    openobserve_token: str | None = None
+    openobserve_endpoint: str = "https://api.openobserve.ai"
+    openobserve_org: str = "default"
+    openobserve_stream: str = "default"
+    openobserve_service_name: str = "clinic-booking"
+    openobserve_enabled: bool = True
+
+    @property
+    def effective_openobserve_token(self) -> str | None:
+        """Return configured OpenObserve auth token."""
+        return self.openobserve_ai_token or self.openobserve_token
+
 
 @lru_cache
 def get_settings() -> Settings:
