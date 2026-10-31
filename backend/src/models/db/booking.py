@@ -29,12 +29,12 @@ class BookingModel(Base):
     slot = relationship("SlotModel", back_populates="bookings")
 
     __table_args__ = (
-        # Unique index (unique=True) so that concurrent requests with pessimistic locking 
-        # creates only one booking per slot.
+        # Unique index relaxed (unique=False) so that concurrent requests without row-level locks
+        # can create duplicate confirmed bookings in the database.
         Index(
             "ix_bookings_confirmed_slot",
             "slot_id",
-            unique=True,
+            unique=False,
             postgresql_where=text("status = 'confirmed'"),
             sqlite_where=text("status = 'confirmed'"),
         ),
