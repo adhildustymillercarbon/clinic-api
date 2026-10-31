@@ -122,7 +122,7 @@ class BookingService:
     #     payload: NewBookingPayload,
     # ) -> BookingResponse:
     #     """Reserve an appointment slot using pessimistic row-level locking.
-    #
+    
     #     Acquires an exclusive lock on the slot row in the database (SELECT ... FOR UPDATE)
     #     and an asyncio.Lock mutex to serialize concurrent attempts.
     #     """
@@ -132,14 +132,14 @@ class BookingService:
     #         slot = await self.slot_repo.get_slot_for_update(payload.slot_id)
     #         if slot is None:
     #             raise SlotNotFoundError("Slot not found")
-    #
+    
     #         now = datetime.now(timezone.utc)
     #         already_booked = await self.booking_repo.has_confirmed_booking(
     #             payload.slot_id
     #         )
     #         # Delegate domain rules to SlotModel aggregate
     #         slot.assert_bookable(now=now, already_booked=already_booked)
-    #
+    
     #         # Create confirmed booking record
     #         booking = BookingModel(
     #             id=f"b_{uuid.uuid4().hex[:12]}",
@@ -149,14 +149,14 @@ class BookingService:
     #             status="confirmed",
     #             created_at=now,
     #         )
-    #
+    
     #         try:
     #             await self.booking_repo.create_booking(booking)
     #             await self.session.commit()
     #         except IntegrityError as exc:
     #             await self.session.rollback()
     #             raise SlotAlreadyBookedError("Slot is already booked") from exc
-    #
+    
     #         return BookingResponse.model_validate(booking)
 
     async def get_booking(self, booking_id: str) -> BookingResponse:

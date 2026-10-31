@@ -94,10 +94,10 @@ class SlotRepository:
     # =========================================================================
     # async def get_slot_for_update(self, slot_id: str) -> SlotModel | None:
     #     """Fetch a slot row with pessimistic row lock (SELECT ... FOR UPDATE).
-    #
+    
     #     Args:
     #         slot_id: Unique slot identifier.
-    #
+    
     #     Returns:
     #         The locked SlotModel instance or None if not found.
     #     """
