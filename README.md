@@ -15,34 +15,48 @@ Modular Monolith FastAPI implementation for the Clinic Booking API (`contract/op
 
 ## Quick Start
 
-### 1. Start Infrastructure (PostgreSQL & Redis)
+### Option A: Run the Entire Stack with Docker Compose (Recommended)
+
+Start all services (PostgreSQL, Redis, Backend API, and Frontend UI):
 
 ```bash
 docker compose up -d
 ```
 
-### 2. Install Dependencies via `uv`
+- **Frontend UI**: `http://localhost:5173`
+- **Backend API & Swagger Docs**: `http://localhost:8000/docs`
+
+### Option B: Local Development
+
+#### 1. Start Infrastructure (PostgreSQL & Redis)
 
 ```bash
+docker compose up -d postgres redis
+```
+
+#### 2. Install Backend Dependencies via `uv`
+
+```bash
+cd backend
 uv sync
 ```
 
-### 3. Run the API Server
+#### 3. Run the API Server
 
 ```bash
 uv run uvicorn src.main:app --reload --port 8000
 ```
 
-### 4. Run Automated Tests (Levels 1–5)
+#### 4. Run Automated Tests (Levels 1–5)
 
 ```bash
 uv run pytest -v
 ```
 
-### 5. Run Frontend UI Dashboard (Cal.com Style)
+#### 5. Run Frontend UI Dashboard (Cal.com Style)
 
 ```bash
-cd frontend
+cd ../frontend
 npm install
 npm run dev
 ```
