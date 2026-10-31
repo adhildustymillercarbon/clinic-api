@@ -1,8 +1,10 @@
 from datetime import datetime, timezone
 from pydantic import (
+    AliasChoices,
     BaseModel,
     ConfigDict,
     Field,
+    computed_field,
     field_serializer,
     field_validator,
     model_validator,
@@ -23,12 +25,13 @@ class SlotSchema(BaseModel):
 
     model_config = ConfigDict(
         from_attributes=True,
+        populate_by_name=True,
         json_schema_extra={
             "example": {
                 "id": "s1",
                 "provider": "Dr Ade",
-                "start": "2026-12-10T09:00:00Z",
-                "end": "2026-12-10T09:30:00Z",
+                "start_time": "2026-12-10T09:00:00Z",
+                "end_time": "2026-12-10T09:30:00Z",
             }
         },
     )
@@ -45,13 +48,15 @@ class SlotSchema(BaseModel):
         description="Name of the doctor or healthcare practitioner",
         examples=["Dr Ade"],
     )
-    start: datetime = Field(
+    start_time: datetime = Field(
         ...,
+        validation_alias=AliasChoices("start_time", "start"),
         description="Slot starting time in UTC (ISO-8601)",
         examples=["2026-12-10T09:00:00Z"],
     )
-    end: datetime = Field(
+    end_time: datetime = Field(
         ...,
+        validation_alias=AliasChoices("end_time", "end"),
         description="Slot concluding time in UTC (ISO-8601)",
         examples=["2026-12-10T09:30:00Z"],
     )
@@ -64,7 +69,7 @@ class SlotSchema(BaseModel):
             raise ValueError("Field cannot be empty")
         return v
 
-    @field_validator("start", "end")
+    @field_validator("start_time", "end_time")
     @classmethod
     def ensure_tz_aware(cls, v: datetime) -> datetime:
         """Ensure datetime has timezone awareness, defaulting to UTC."""
@@ -75,14 +80,26 @@ class SlotSchema(BaseModel):
     @model_validator(mode="after")
     def validate_time_order(self) -> "SlotSchema":
         """Ensure slot end time is strictly after start time."""
-        if self.end <= self.start:
+        if self.end_time <= self.start_time:
             raise ValueError("Slot end time must be after start time")
         return self
 
-    @field_serializer("start", "end")
+    @field_serializer("start_time", "end_time")
     def serialize_dt(self, dt: datetime) -> str:
         """Serialize datetime to UTC ISO string with Z suffix."""
         return format_datetime_utc(dt)
+
+    @computed_field
+    @property
+    def start(self) -> str:
+        """Legacy alias for start_time formatted as UTC string."""
+        return format_datetime_utc(self.start_time)
+
+    @computed_field
+    @property
+    def end(self) -> str:
+        """Legacy alias for end_time formatted as UTC string."""
+        return format_datetime_utc(self.end_time)
 
 
 class SlotWithAvailabilitySchema(SlotSchema):
@@ -133,13 +150,13 @@ class ResetSlotsRequest(BaseModel):
                 raise ValueError(f"Duplicate slot id '{slot.id}'")
             seen_ids.add(slot.id)
 
-        sorted_slots = sorted(self.slots, key=lambda s: (s.start, s.end))
+        sorted_slots = sorted(self.slots, key=lambda s: (s.start_time, s.end_time))
         for i in range(1, len(sorted_slots)):
             prev = sorted_slots[i - 1]
             curr = sorted_slots[i]
-            if curr.start == prev.start:
+            if curr.start_time == prev.start_time:
                 raise ValueError("Two slots cannot have the same time")
-            if curr.start < prev.end:
+            if curr.start_time < prev.end_time:
                 raise ValueError("Slots cannot have overlapping times")
         return self
 

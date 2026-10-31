@@ -8,6 +8,7 @@ from src.core.config import get_settings
 from src.core.database import close_db, init_db
 from src.core.exceptions import register_exception_handlers
 from src.core.redis import close_redis
+from src.core.telemetry import setup_telemetry, shutdown_telemetry
 
 
 @asynccontextmanager
@@ -15,6 +16,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     """Manage application startup and shutdown lifecycle."""
     await init_db()
     yield
+    shutdown_telemetry()
     await close_redis()
     await close_db()
 
@@ -84,6 +86,8 @@ def create_app() -> FastAPI:
         openapi_tags=TAGS_METADATA,
         lifespan=lifespan,
     )
+
+    setup_telemetry(app)
 
     app.add_middleware(
         CORSMiddleware,

@@ -41,12 +41,17 @@ services:
       DATABASE_URL: postgresql+asyncpg://clinic:clinic_secret@postgres:5432/clinic_booking
       REDIS_URL: redis://redis:6379/0
       API_KEY: ${API_KEY:-secret-api-key}
+      OPENOBSERVE_AI_TOKEN: ${OPENOBSERVE_AI_TOKEN:-}
+      OPENOBSERVE_ENDPOINT: ${OPENOBSERVE_ENDPOINT:-https://api.openobserve.ai}
+      OPENOBSERVE_ORG: ${OPENOBSERVE_ORG:-default}
+      OPENOBSERVE_STREAM: ${OPENOBSERVE_STREAM:-default}
+      OPENOBSERVE_SERVICE_NAME: ${OPENOBSERVE_SERVICE_NAME:-clinic-booking}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
   frontend:
     build:

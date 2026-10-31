@@ -107,3 +107,40 @@ async def test_cancel_nonexistent_booking_returns_404(
     res = await client.delete("/bookings/does-not-exist")
     assert res.status_code == 404
     assert "error" in res.json()
+
+
+async def test_concurrent_bookings_create_duplicates_without_locks(
+    client: httpx.AsyncClient,
+) -> None:
+    """Demonstrates that without pessimistic row locks or mutexes,
+    concurrent requests for the same slot create duplicate confirmed bookings.
+    """
+    await client.post(
+        "/reset",
+        json={
+            "slots": [
+                {
+                    "id": "s_dup",
+                    "provider": "Dr Ade",
+                    "start": "2027-06-15T09:00:00Z",
+                    "end": "2027-06-15T09:30:00Z",
+                }
+            ]
+        },
+    )
+
+    async def attempt_book(idx: int) -> httpx.Response:
+        return await client.post(
+            "/bookings",
+            json={
+                "slot_id": "s_dup",
+                "name": f"User {idx}",
+                "email": f"user{idx}@example.com",
+            },
+        )
+
+    responses = await asyncio.gather(*(attempt_book(i) for i in range(10)))
+    status_codes = [r.status_code for r in responses]
+
+    # Without row-level locks, multiple concurrent requests successfully reserve the slot
+    assert status_codes.count(201) > 1

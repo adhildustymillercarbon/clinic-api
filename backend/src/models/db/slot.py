@@ -13,8 +13,8 @@ class SlotModel(Base):
 
     id: Mapped[str] = mapped_column(String(128), primary_key=True)
     provider: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
-    end: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    end_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     bookings = relationship(
         "BookingModel",
@@ -22,11 +22,21 @@ class SlotModel(Base):
         cascade="all, delete-orphan",
     )
 
+    @property
+    def start(self) -> datetime:
+        """Backward-compatible property for start_time."""
+        return self.start_time
+
+    @property
+    def end(self) -> datetime:
+        """Backward-compatible property for end_time."""
+        return self.end_time
+
     __table_args__ = (
-        Index("ix_slots_start_id", "start", "id"),
-        Index("uq_slots_start", "start", unique=True),
-        Index("uq_slots_start_end", "start", "end", unique=True),
-        CheckConstraint("end > start", name="ck_slots_end_after_start"),
+        Index("ix_slots_start_time_id", "start_time", "id"),
+        Index("uq_slots_start_time", "start_time", unique=True),
+        Index("uq_slots_start_end_time", "start_time", "end_time", unique=True),
+        CheckConstraint("end_time > start_time", name="ck_slots_end_after_start"),
     )
 
     def assert_bookable(self, now: datetime, already_booked: bool = False) -> None:
@@ -41,9 +51,9 @@ class SlotModel(Base):
             SlotAlreadyBookedError: If an active confirmed booking exists.
         """
         slot_start = (
-            self.start.replace(tzinfo=timezone.utc)
-            if self.start.tzinfo is None
-            else self.start.astimezone(timezone.utc)
+            self.start_time.replace(tzinfo=timezone.utc)
+            if self.start_time.tzinfo is None
+            else self.start_time.astimezone(timezone.utc)
         )
         if slot_start <= now:
             raise SlotAlreadyStartedError()
