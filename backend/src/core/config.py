@@ -13,7 +13,7 @@ class Settings(BaseSettings):
 
     app_title: str = "Clinic booking API"
     app_version: str = "1.0"
-    api_key: str = "koya-secret-api-key"
+    api_key: str = "secret-api-key"
     database_url: str = "postgresql+asyncpg://clinic:clinic_secret@localhost:5432/clinic_booking"
     redis_url: str = "redis://localhost:6379/0"
     rate_limit_max_attempts: int = 5
