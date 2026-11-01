@@ -73,38 +73,14 @@ class SlotRepository:
             )
             for slot, is_available in rows
         ]
+        
+    async def get_slot_for_update(self, slot_id: str) -> SlotModel | None:
+       """Fetch a slot row WITH pessimistic row locking."""
+       stmt = (
+           select(SlotModel)
+           .where(SlotModel.id == slot_id)
+           .with_for_update()
+           )
+       result = await self.session.execute(stmt)
+       return result.scalar_one_or_none()
 
-    async def get_slot(self, slot_id: str) -> SlotModel | None:
-        """Fetch a slot row WITHOUT pessimistic row locking.
-
-        Allows concurrent transactions to read the same slot concurrently,
-        enabling race conditions where multiple requests attempt to book the same slot.
-        """
-        stmt = select(SlotModel).where(SlotModel.id == slot_id)
-        result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
-
-    # =========================================================================
-    # PESSIMISTIC ROW-LEVEL LOCKING IMPLEMENTATION (COMMENTED OUT)
-    # The following method implements pessimistic row-level locking via SQLAlchemy's
-    # `.with_for_update()`. When active, this forces the database engine to acquire
-    # an exclusive row-level lock (SELECT ... FOR UPDATE) on the slot row until
-    # transaction commit or rollback, preventing concurrent transactions from
-    # modifying or booking the slot simultaneously.
-    # =========================================================================
-    # async def get_slot_for_update(self, slot_id: str) -> SlotModel | None:
-    #     """Fetch a slot row with pessimistic row lock (SELECT ... FOR UPDATE).
-    
-    #     Args:
-    #         slot_id: Unique slot identifier.
-    
-    #     Returns:
-    #         The locked SlotModel instance or None if not found.
-    #     """
-    #     stmt = (
-    #         select(SlotModel)
-    #         .where(SlotModel.id == slot_id)
-    #         .with_for_update()
-    #     )
-    #     result = await self.session.execute(stmt)
-    #     return result.scalar_one_or_none()
