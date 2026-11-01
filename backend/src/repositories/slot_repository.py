@@ -73,14 +73,13 @@ class SlotRepository:
             )
             for slot, is_available in rows
         ]
-        
-    async def get_slot_for_update(self, slot_id: str) -> SlotModel | None:
-       """Fetch a slot row WITH pessimistic row locking."""
-       stmt = (
-           select(SlotModel)
-           .where(SlotModel.id == slot_id)
-           .with_for_update()
-           )
-       result = await self.session.execute(stmt)
-       return result.scalar_one_or_none()
 
+    async def get_slot(self, slot_id: str) -> SlotModel | None:
+        """Fetch a slot row WITHOUT pessimistic row locking.
+ 
+        Allows concurrent transactions to read the same slot concurrently,
+        enabling race conditions where multiple requests attempt to book the same slot.
+        """
+        stmt = select(SlotModel).where(SlotModel.id == slot_id)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()

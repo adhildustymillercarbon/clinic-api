@@ -143,4 +143,4 @@ async def test_concurrent_bookings_create_duplicates_without_locks(
     status_codes = [r.status_code for r in responses]
 
     # Without row-level locks, multiple concurrent requests successfully reserve the slot
-    assert status_codes.count(201) == 1
+    assert status_codes.count(201) > 1

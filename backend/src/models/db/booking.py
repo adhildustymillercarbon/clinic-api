@@ -33,7 +33,7 @@ class BookingModel(Base):
         Index(
             "ix_bookings_confirmed_slot",
             "slot_id",
-            unique=True,
+            unique=False,
             postgresql_where=text("status = 'confirmed'"),
             sqlite_where=text("status = 'confirmed'"),
         ),

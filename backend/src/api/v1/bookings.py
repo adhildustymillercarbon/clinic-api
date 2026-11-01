@@ -171,7 +171,7 @@ async def create_booking(
             raise BadRequestError("Invalid JSON request body") from exc
 
     payload = NewBookingPayload.validate_raw(raw_payload)
-    return await service.create_booking_with_pessimistic_lock(payload)
+    return await service.create_booking(payload)
 
 
 @router.get(
