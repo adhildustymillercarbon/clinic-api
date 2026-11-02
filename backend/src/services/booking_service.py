@@ -2,6 +2,7 @@ import asyncio
 import base64
 from collections import defaultdict
 from datetime import datetime, timezone
+import logging
 from typing import Any
 import uuid
 import redis.asyncio as redis
@@ -32,6 +33,7 @@ from src.repositories.slot_repository import SlotRepository
 # In-memory lock dictionary previously used for application-level synchronization.
 # Retained for reference and used in the commented-out locked implementation below.
 _slot_locks: dict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
+logger = logging.getLogger(__name__)
 
 
 class BookingService:
@@ -91,6 +93,11 @@ class BookingService:
                await self.session.commit()
            except IntegrityError as exc:
                await self.session.rollback()
+               logger.error(
+                   "Database IntegrityError fallback triggered on slot %s",
+                   payload.slot_id,
+                   exc_info=True,
+               )
                raise SlotAlreadyBookedError("Slot is already booked") from exc
   
            return BookingResponse.model_validate(booking)

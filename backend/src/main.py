@@ -6,8 +6,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.api.router import api_router
 from src.core.config import get_settings
 from src.core.database import close_db, init_db
+from src.core.error_webhook import setup_error_webhook
 from src.core.exceptions import register_exception_handlers
-from src.core.redis import close_redis
+from src.core.redis import close_redis, get_redis_client
 from src.core.telemetry import setup_telemetry, shutdown_telemetry
 
 
@@ -16,6 +17,8 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     """Manage application startup and shutdown lifecycle."""
     await init_db()
     yield
+    if hasattr(_app.state, "error_webhook"):
+        await _app.state.error_webhook.shutdown()
     shutdown_telemetry()
     await close_redis()
     await close_db()
@@ -99,6 +102,12 @@ def create_app() -> FastAPI:
     )
 
     register_exception_handlers(app)
+    setup_error_webhook(
+        app,
+        redis_getter=lambda: app.dependency_overrides.get(
+            get_redis_client, get_redis_client
+        )(),
+    )
     app.include_router(api_router)
     return app
 
